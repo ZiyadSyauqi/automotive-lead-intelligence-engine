@@ -1,0 +1,304 @@
+{
+  "partition": "training only",
+  "question_is_conversion_imbalanced": {
+    "rows": 4000,
+    "conversion_rate": 0.2145,
+    "class_counts": {
+      "0": 3142,
+      "1": 858
+    }
+  },
+  "question_which_inputs_need_imputation": {
+    "lead_id": 0,
+    "purchase_timeline_days": 191,
+    "previous_interactions": 0,
+    "follow_up_count": 0,
+    "response_latency_hours": 649,
+    "contactability": 0,
+    "financing_interest": 206,
+    "test_drive_activity": 0,
+    "vehicle_price_segment": 0,
+    "lead_source": 0,
+    "trade_in_interest": 0,
+    "appointment_activity": 0,
+    "converted_30d": 0
+  },
+  "question_are_numeric_ranges_plausible": {
+    "purchase_timeline_days": {
+      "count": 3809.0,
+      "mean": 72.5434497243371,
+      "std": 60.0294025013735,
+      "min": 2.0,
+      "25%": 33.0,
+      "50%": 54.0,
+      "75%": 92.0,
+      "max": 365.0
+    },
+    "previous_interactions": {
+      "count": 4000.0,
+      "mean": 2.3295,
+      "std": 1.601115437019038,
+      "min": 0.0,
+      "25%": 1.0,
+      "50%": 2.0,
+      "75%": 3.0,
+      "max": 10.0
+    },
+    "follow_up_count": {
+      "count": 4000.0,
+      "mean": 2.049,
+      "std": 1.4174276966811499,
+      "min": 0.0,
+      "25%": 1.0,
+      "50%": 2.0,
+      "75%": 3.0,
+      "max": 8.0
+    },
+    "response_latency_hours": {
+      "count": 3351.0,
+      "mean": 17.08584596150576,
+      "std": 19.387818792004932,
+      "min": 0.41798700393636,
+      "25%": 5.724674217964516,
+      "50%": 10.988320262135106,
+      "75%": 20.165936357637896,
+      "max": 168.0
+    }
+  },
+  "question_are_categories_represented": {
+    "contactability": {
+      "reachable": 2425,
+      "intermittent": 1096,
+      "unreachable": 479
+    },
+    "financing_interest": {
+      "yes": 1679,
+      "no": 1165,
+      "undecided": 950,
+      "nan": 206
+    },
+    "test_drive_activity": {
+      "none": 2598,
+      "completed": 861,
+      "requested": 541
+    },
+    "vehicle_price_segment": {
+      "mid": 1822,
+      "entry": 1593,
+      "premium": 585
+    },
+    "lead_source": {
+      "marketplace": 1212,
+      "website": 1196,
+      "walk_in": 626,
+      "referral": 547,
+      "event": 419
+    },
+    "trade_in_interest": {
+      "no": 1945,
+      "yes": 1234,
+      "undecided": 821
+    },
+    "appointment_activity": {
+      "none": 2131,
+      "attended": 1166,
+      "scheduled": 532,
+      "missed": 171
+    }
+  },
+  "question_which_features_separate_outcomes": {
+    "contactability": {
+      "intermittent": {
+        "count": 1096,
+        "conversion_rate": 0.19525547445255476
+      },
+      "reachable": {
+        "count": 2425,
+        "conversion_rate": 0.24164948453608248
+      },
+      "unreachable": {
+        "count": 479,
+        "conversion_rate": 0.12108559498956159
+      }
+    },
+    "financing_interest": {
+      "no": {
+        "count": 1165,
+        "conversion_rate": 0.2094420600858369
+      },
+      "undecided": {
+        "count": 950,
+        "conversion_rate": 0.21789473684210525
+      },
+      "yes": {
+        "count": 1679,
+        "conversion_rate": 0.22096486003573557
+      },
+      "nan": {
+        "count": 206,
+        "conversion_rate": 0.17475728155339806
+      }
+    },
+    "test_drive_activity": {
+      "completed": {
+        "count": 861,
+        "conversion_rate": 0.37398373983739835
+      },
+      "none": {
+        "count": 2598,
+        "conversion_rate": 0.17013086989992302
+      },
+      "requested": {
+        "count": 541,
+        "conversion_rate": 0.17375231053604437
+      }
+    },
+    "vehicle_price_segment": {
+      "entry": {
+        "count": 1593,
+        "conversion_rate": 0.2128060263653484
+      },
+      "mid": {
+        "count": 1822,
+        "conversion_rate": 0.21405049396267836
+      },
+      "premium": {
+        "count": 585,
+        "conversion_rate": 0.2205128205128205
+      }
+    },
+    "lead_source": {
+      "event": {
+        "count": 419,
+        "conversion_rate": 0.2171837708830549
+      },
+      "marketplace": {
+        "count": 1212,
+        "conversion_rate": 0.21617161716171618
+      },
+      "referral": {
+        "count": 547,
+        "conversion_rate": 0.20658135283363802
+      },
+      "walk_in": {
+        "count": 626,
+        "conversion_rate": 0.22523961661341854
+      },
+      "website": {
+        "count": 1196,
+        "conversion_rate": 0.20986622073578595
+      }
+    },
+    "trade_in_interest": {
+      "no": {
+        "count": 1945,
+        "conversion_rate": 0.2159383033419023
+      },
+      "undecided": {
+        "count": 821,
+        "conversion_rate": 0.20097442143727162
+      },
+      "yes": {
+        "count": 1234,
+        "conversion_rate": 0.22123176661264182
+      }
+    },
+    "appointment_activity": {
+      "attended": {
+        "count": 1166,
+        "conversion_rate": 0.31217838765008576
+      },
+      "missed": {
+        "count": 171,
+        "conversion_rate": 0.12280701754385964
+      },
+      "none": {
+        "count": 2131,
+        "conversion_rate": 0.17785077428437354
+      },
+      "scheduled": {
+        "count": 532,
+        "conversion_rate": 0.17669172932330826
+      }
+    },
+    "purchase_timeline_days": {
+      "(1.999, 33.0]": {
+        "count": 996,
+        "conversion_rate": 0.3493975903614458
+      },
+      "(33.0, 54.0]": {
+        "count": 917,
+        "conversion_rate": 0.23227917121046893
+      },
+      "(54.0, 92.0]": {
+        "count": 948,
+        "conversion_rate": 0.1540084388185654
+      },
+      "(92.0, 365.0]": {
+        "count": 948,
+        "conversion_rate": 0.11181434599156118
+      }
+    },
+    "previous_interactions": {
+      "(-0.001, 1.0]": {
+        "count": 1356,
+        "conversion_rate": 0.15781710914454278
+      },
+      "(1.0, 2.0]": {
+        "count": 1013,
+        "conversion_rate": 0.1934846989141165
+      },
+      "(2.0, 3.0]": {
+        "count": 806,
+        "conversion_rate": 0.2369727047146402
+      },
+      "(3.0, 10.0]": {
+        "count": 825,
+        "conversion_rate": 0.3115151515151515
+      }
+    },
+    "follow_up_count": {
+      "(-0.001, 1.0]": {
+        "count": 1563,
+        "conversion_rate": 0.21113243761996162
+      },
+      "(1.0, 2.0]": {
+        "count": 1104,
+        "conversion_rate": 0.223731884057971
+      },
+      "(2.0, 3.0]": {
+        "count": 722,
+        "conversion_rate": 0.2146814404432133
+      },
+      "(3.0, 8.0]": {
+        "count": 611,
+        "conversion_rate": 0.20621931260229132
+      }
+    },
+    "response_latency_hours": {
+      "(0.417, 5.725]": {
+        "count": 838,
+        "conversion_rate": 0.29236276849642007
+      },
+      "(5.725, 10.988]": {
+        "count": 838,
+        "conversion_rate": 0.2386634844868735
+      },
+      "(10.988, 20.166]": {
+        "count": 837,
+        "conversion_rate": 0.22461170848267623
+      },
+      "(20.166, 168.0]": {
+        "count": 838,
+        "conversion_rate": 0.1467780429594272
+      }
+    }
+  },
+  "leakage_checks": {
+    "unique_lead_ids": true,
+    "schema_allowlist_passed": true,
+    "target_and_id_excluded_from_features": true,
+    "exact_numeric_target_copies": [],
+    "temporal_review": "All features defined at day 7; outcome follows snapshot. No real timestamps exist, so temporal validity is a design assumption, not an empirical proof."
+  }
+}

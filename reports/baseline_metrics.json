@@ -1,0 +1,51 @@
+{
+  "protocol": {
+    "n_rows": 5000,
+    "seed": 42,
+    "test_fraction": 0.2,
+    "capacity_fraction": 0.2,
+    "train_rows": 4000,
+    "test_rows": 1000,
+    "train_conversion_rate": 0.2145,
+    "test_conversion_rate": 0.215,
+    "split": "stratified random, unique leads",
+    "dataset_sha256": "9f48376589ef746acb9945e3bada8cb7b891a943697524841bcb0a97c532d78f"
+  },
+  "versions": {
+    "python": "3.12.13",
+    "numpy": "2.3.5",
+    "pandas": "2.2.3",
+    "scikit-learn": "1.8.0",
+    "scipy": "1.17.0",
+    "joblib": "1.5.3",
+    "threadpoolctl": "3.6.0"
+  },
+  "metrics": {
+    "roc_auc": 0.7502355206636053,
+    "pr_auc_average_precision": 0.4822401083104204,
+    "precision": 0.68,
+    "recall": 0.15813953488372093,
+    "f1": 0.25660377358490566,
+    "confusion_matrix": [
+      [
+        769,
+        16
+      ],
+      [
+        181,
+        34
+      ]
+    ],
+    "threshold": 0.5,
+    "k": 200,
+    "conversions_in_top_k": 98,
+    "precision_at_k": 0.49,
+    "recall_at_k": 0.4558139534883721,
+    "lift_at_k": 2.2790697674418605
+  },
+  "random_ranking_expected": {
+    "precision_at_k": 0.215,
+    "recall_at_k": 0.2,
+    "lift_at_k": 1.0
+  }
+}
