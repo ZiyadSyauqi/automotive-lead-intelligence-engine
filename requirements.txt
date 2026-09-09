@@ -1,0 +1,2 @@
+# Install the local package and test dependencies; pins live in pyproject.toml.
+-e .[dev]

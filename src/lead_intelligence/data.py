@@ -9,7 +9,7 @@ CATEGORICAL = ["contactability", "financing_interest", "test_drive_activity",
                "vehicle_price_segment", "lead_source", "trade_in_interest",
                "appointment_activity"]
 FEATURES = NUMERIC + CATEGORICAL
-TARGET = "converted_30d"
+TARGET = "converted"
 
 
 def generate_leads(n_rows: int = 5000, seed: int = 42) -> pd.DataFrame:

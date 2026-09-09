@@ -1,4 +1,4 @@
-# Week 1 exploratory findings
+# v0.1 exploratory findings
 
 Protocol: default 5,000-row generator, seed 42. These observations use only the
 4,000 training rows. Full counts, distributions and rates are in
@@ -18,7 +18,7 @@ Numeric outcome groups use quartile bins (ties may reduce the number of bins);
 missing rows are counted separately in the missingness section. These results
 support a moderately difficult demonstration dataset, not market conclusions.
 
-Test-set ranking achieves lift 2.2791 at K=200, yet 117 of 215 converters remain
+Test-set ranking achieves lift 2.7442 at K=100, yet 156 of 215 converters remain
 outside the selected queue. This cost of limited capacity must remain visible in
 future product explanations. Calibration, uncertainty estimates, operational
 eligibility, and causal benefit have not been established.

@@ -4,7 +4,7 @@
 
 The user is a dealership sales representative or team lead deciding which eligible
 leads to contact next with limited staff time. The eventual product ranks leads,
-assigns priority, suggests a next action, and explains the recommendation. Week 1
+assigns priority, suggests a next action, and explains the recommendation. v0.1
 implements only the offline probability/ranking baseline and its evaluation.
 
 **Prediction:** probability that an open lead completes a vehicle purchase within
@@ -29,7 +29,7 @@ unresolved outcomes must not be silently labeled negative.
 ## Intended action and boundaries
 
 The future queue will recommend whom to contact and when, with a human retaining
-control. A contact-within-two-hours action is a possible Week 3 policy, not a
+control. A contact-within-two-hours action is a possible v0.3 policy, not a
 learned causal conclusion or an implemented service. Contact consent, suppression
 lists, business hours, duplicate handling, and reachable status must gate a real
 queue. The current top-K evaluation ranks the full synthetic cohort; it does not
@@ -58,7 +58,7 @@ attributes are generated. Their absence does not establish fairness.
 | trade_in_interest | yes / no / undecided | Expressed interest |
 | response_latency_hours | 0.1–168; sometimes missing | Mean observed customer response delay |
 | appointment_activity | none / scheduled / attended / missed | Latest appointment status |
-| converted_30d | 0 / 1 | Purchase after snapshot within 30 days; target only |
+| converted | 0 / 1 | Purchase after snapshot within 30 days; target only |
 
 No proprietary records, organization-specific terminology, credentials, or
 confidential policies are used. The schema and relationships are author-designed
@@ -100,7 +100,7 @@ simulator. Hidden intent, score, and probability are never exported.
   fixed for reference metrics; it is not a sales policy.
 - PR-AUC here means average precision. Confusion matrix rows are actual 0/1 and
   columns predicted 0/1. Zero-division threshold metrics return zero.
-- Capacity defaults to top 20% of test leads, `K = ceil(fraction * test_size)`.
+- Capacity defaults to top 10% of test leads, `K = ceil(fraction * test_size)`.
   Precision@K is conversions among selected / K; Recall@K is selected conversions
   / all conversions; Lift@K is Precision@K / test conversion prevalence. Random
   ranking expectations are prevalence, K/N, and 1, respectively. Stable input order
@@ -111,5 +111,5 @@ They do not establish additional sales caused by the queue. Reported probabiliti
 are fitted synthetic propensities, not validated real-world probabilities. The
 single held-out estimate has sampling uncertainty; no confidence interval or
 calibration claim is made. Do not tune models, K, or thresholds to this test set in
-Week 2: use training-only cross-validation for selection and retain this baseline
+v0.2: use training-only cross-validation for selection and retain this baseline
 protocol for comparison. Repeated test comparisons eventually require a new holdout.

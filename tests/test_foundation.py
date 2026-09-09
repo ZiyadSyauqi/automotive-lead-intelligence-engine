@@ -44,7 +44,7 @@ def test_pipeline_train_only_imputation_unseen_categories_and_roundtrip(tmp_path
     assert ((probabilities >= 0) & (probabilities <= 1)).all()
     np.testing.assert_allclose(probabilities.sum(axis=1), 1)
     # Dropped identifiers/outcomes must not alter scores, even if supplied accidentally.
-    np.testing.assert_allclose(probabilities, model.predict_proba(holdout.assign(lead_id=-1, converted_30d=1)))
+    np.testing.assert_allclose(probabilities, model.predict_proba(holdout.assign(lead_id=-1, converted=1)))
     np.testing.assert_allclose(statistics, train[NUMERIC].median().to_numpy())
     path = tmp_path / "model.joblib"
     joblib.dump(model, path)
@@ -66,3 +66,22 @@ def test_ranking_metrics_hand_calculated_and_edge_cases():
             ranking_metrics(np.zeros(3), np.ones(3), invalid_k)
     with pytest.raises(ValueError):
         ranking_metrics(np.array([0, 1]), np.array([np.nan, .5]), 1)
+
+
+def test_experiment_ranks_holdout_and_applies_capacity(tmp_path):
+    from sklearn.model_selection import train_test_split
+    from lead_intelligence.experiment import run_experiment
+
+    report = run_experiment(500, 42, .1, tmp_path / "reports", tmp_path / "artifacts")
+    data = generate_leads(500, 42)
+    _, holdout = train_test_split(data, test_size=.2, random_state=42, stratify=data[TARGET])
+    ranked = pd.DataFrame(report["top_10_test_leads"])
+    assert report["metrics"]["k"] == 10
+    assert len(ranked) == 10 and ranked.lead_id.is_unique
+    assert ranked.conversion_probability.is_monotonic_decreasing
+    assert set(ranked.lead_id) <= set(holdout.lead_id)
+    expected_labels = holdout.set_index("lead_id").loc[ranked.lead_id, TARGET].to_numpy()
+    np.testing.assert_array_equal(ranked.actual_conversion, expected_labels)
+    assert report["metrics"]["precision_at_k"] == ranked.actual_conversion.mean()
+    assert report["metrics"]["lift_at_k"] == pytest.approx(
+        ranked.actual_conversion.mean() / holdout[TARGET].mean())

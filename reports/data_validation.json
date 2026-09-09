@@ -21,7 +21,7 @@
     "lead_source": 0,
     "trade_in_interest": 0,
     "appointment_activity": 0,
-    "converted_30d": 0
+    "converted": 0
   },
   "question_are_numeric_ranges_plausible": {
     "purchase_timeline_days": {

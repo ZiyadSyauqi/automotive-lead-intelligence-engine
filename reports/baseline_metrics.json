@@ -3,16 +3,17 @@
     "n_rows": 5000,
     "seed": 42,
     "test_fraction": 0.2,
-    "capacity_fraction": 0.2,
+    "capacity_fraction": 0.1,
     "train_rows": 4000,
     "test_rows": 1000,
     "train_conversion_rate": 0.2145,
     "test_conversion_rate": 0.215,
+    "full_dataset_conversion_rate": 0.2146,
     "split": "stratified random, unique leads",
-    "dataset_sha256": "9f48376589ef746acb9945e3bada8cb7b891a943697524841bcb0a97c532d78f"
+    "dataset_sha256": "e543ed1b55088fd5bcd3c35f4c635794c98fd901397530e19725c8af383abd07"
   },
   "versions": {
-    "python": "3.12.13",
+    "python": "3.12.14",
     "numpy": "2.3.5",
     "pandas": "2.2.3",
     "scikit-learn": "1.8.0",
@@ -37,15 +38,67 @@
       ]
     ],
     "threshold": 0.5,
-    "k": 200,
-    "conversions_in_top_k": 98,
-    "precision_at_k": 0.49,
-    "recall_at_k": 0.4558139534883721,
-    "lift_at_k": 2.2790697674418605
+    "k": 100,
+    "conversions_in_top_k": 59,
+    "precision_at_k": 0.59,
+    "recall_at_k": 0.2744186046511628,
+    "lift_at_k": 2.744186046511628
   },
+  "top_10_test_leads": [
+    {
+      "lead_id": 4320,
+      "conversion_probability": 0.8292294809855307,
+      "actual_conversion": 1
+    },
+    {
+      "lead_id": 2012,
+      "conversion_probability": 0.7792687013973045,
+      "actual_conversion": 1
+    },
+    {
+      "lead_id": 958,
+      "conversion_probability": 0.7449643541801169,
+      "actual_conversion": 0
+    },
+    {
+      "lead_id": 119,
+      "conversion_probability": 0.7209041444339873,
+      "actual_conversion": 1
+    },
+    {
+      "lead_id": 4525,
+      "conversion_probability": 0.7205368224796025,
+      "actual_conversion": 0
+    },
+    {
+      "lead_id": 2214,
+      "conversion_probability": 0.6550772050690827,
+      "actual_conversion": 1
+    },
+    {
+      "lead_id": 705,
+      "conversion_probability": 0.6539813449865909,
+      "actual_conversion": 1
+    },
+    {
+      "lead_id": 3202,
+      "conversion_probability": 0.650638639031551,
+      "actual_conversion": 0
+    },
+    {
+      "lead_id": 442,
+      "conversion_probability": 0.6472064523211698,
+      "actual_conversion": 1
+    },
+    {
+      "lead_id": 1167,
+      "conversion_probability": 0.6389560720375453,
+      "actual_conversion": 0
+    }
+  ],
   "random_ranking_expected": {
     "precision_at_k": 0.215,
-    "recall_at_k": 0.2,
+    "recall_at_k": 0.1,
     "lift_at_k": 1.0
   }
 }

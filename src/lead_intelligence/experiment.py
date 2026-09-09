@@ -1,4 +1,4 @@
-"""Run the fixed Week 1 protocol; never tune against the held-out test set."""
+"""Run the fixed v0.1 protocol; never tune against the held-out test set."""
 
 import argparse
 import hashlib
@@ -9,6 +9,7 @@ from importlib.metadata import version
 from pathlib import Path
 
 import joblib
+import pandas as pd
 from sklearn.model_selection import train_test_split
 
 from lead_intelligence.data import FEATURES, TARGET, generate_leads
@@ -31,15 +32,21 @@ def run_experiment(n_rows: int, seed: int, capacity_fraction: float,
     scores = pipeline.predict_proba(test[FEATURES])[:, 1]
     k = math.ceil(capacity_fraction * len(test))
     prevalence = float(test[TARGET].mean())
+    ranked = pd.DataFrame({
+        "lead_id": test.lead_id.to_numpy(), "conversion_probability": scores,
+        "actual_conversion": test[TARGET].to_numpy(),
+    }).sort_values("conversion_probability", ascending=False, kind="stable")
     report = {
         "protocol": {"n_rows": n_rows, "seed": seed, "test_fraction": .2,
                      "capacity_fraction": capacity_fraction, "train_rows": len(train),
                      "test_rows": len(test), "train_conversion_rate": float(train[TARGET].mean()),
-                     "test_conversion_rate": prevalence, "split": "stratified random, unique leads",
+                     "test_conversion_rate": prevalence,
+                     "full_dataset_conversion_rate": float(data[TARGET].mean()), "split": "stratified random, unique leads",
                      "dataset_sha256": hashlib.sha256(data.to_csv(index=False).encode()).hexdigest()},
         "versions": {"python": platform.python_version(), **{p: version(p) for p in
                      ["numpy", "pandas", "scikit-learn", "scipy", "joblib", "threadpoolctl"]}},
         "metrics": evaluate(test[TARGET].to_numpy(), scores, k),
+        "top_10_test_leads": ranked.head(10).to_dict(orient="records"),
         "random_ranking_expected": {"precision_at_k": prevalence,
                                     "recall_at_k": k / len(test), "lift_at_k": 1.0},
     }
@@ -56,7 +63,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--rows", type=int, default=5000)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--capacity-fraction", type=float, default=.2)
+    parser.add_argument("--capacity-fraction", type=float, default=.1)
     parser.add_argument("--output", type=Path, default=Path("reports"))
     parser.add_argument("--artifacts", type=Path, default=Path("artifacts"))
     args = parser.parse_args()
@@ -64,7 +71,11 @@ def main() -> None:
         report = run_experiment(args.rows, args.seed, args.capacity_fraction, args.output, args.artifacts)
     except ValueError as error:
         parser.error(str(error))
-    print(json.dumps(report, indent=2))
+    print(json.dumps({key: value for key, value in report.items()
+                      if key != "top_10_test_leads"}, indent=2))
+    print("\nTop 10 test leads (actual outcome is for offline evaluation only):")
+    print(pd.DataFrame(report["top_10_test_leads"]).to_string(
+        index=False, float_format=lambda value: f"{value:.4f}"))
 
 
 if __name__ == "__main__":
