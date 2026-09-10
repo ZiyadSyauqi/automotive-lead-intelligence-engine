@@ -15,7 +15,7 @@ The model estimates purchase probability within 30 days after a scoring snapshot
 For this first cohort, the snapshot is seven days after lead creation, for leads
 still open then. It does not yet score brand-new leads at arrival.
 
-## Current version — v0.1
+## v0.1 — baseline lead ranking
 
 - Reproducible 5,000-lead synthetic generator with numerical and categorical inputs.
 - Training-only imputation, scaling, and OneHotEncoder in a ColumnTransformer/Pipeline.
@@ -24,9 +24,77 @@ still open then. It does not yet score brand-new leads at arrival.
 - A printed table of the top 10 held-out leads: `lead_id`, `conversion_probability`,
   and `actual_conversion`. Actual outcomes are for offline evaluation only.
 
-Priority rules, recommended actions, explanations, stronger models, calibration,
-FastAPI, Docker, LLMs, SHAP, frontend, cloud deployment, MLflow, Kubernetes,
-databases, and CI/CD are not implemented.
+Priority rules, recommended actions, FastAPI, Docker, LLMs, SHAP, frontend,
+cloud deployment, MLflow, Kubernetes, databases, and CI/CD are not implemented.
+
+## v0.2 — comparison, calibration, and model reliance
+
+Added exactly one challenger (HistGradientBoosting), training-only sigmoid
+calibration evaluation, and lightweight feature-reliance analysis. The original
+v0.1 report is preserved. [Audit and protocol](docs/model-selection.md) document
+what was checked against the code and how selection was frozen before testing.
+
+The original 1,000-lead test set stays separate. The original 4,000 training leads
+are split into 3,000 fit / 1,000 validation leads. Calibration uses three-fold CV
+inside the fit portion, including preprocessing. There is one fixed configuration
+per family, with raw and sigmoid variants; no broad tuning search.
+
+Actual **validation** results (the source of model selection):
+
+| Model | PR-AUC (AP) | Lift@10% | Brier | Complexity |
+|---|---:|---:|---:|---|
+| Logistic Regression | 0.4677 | 2.5701 | 0.1450 | LOW |
+| HistGradientBoosting | 0.4648 | 2.5701 | 0.1450 | MEDIUM |
+
+**KEEP BASELINE — uncalibrated Logistic Regression.** Challenger AP gain was
+-0.002910 and lift gain was zero. Neither meets the predeclared requirements of
+at least +0.02 AP and +0.15 lift, with at most +0.005 Brier deterioration.
+Complexity did not earn its place. These are project criteria, not significance tests.
+
+Calibration was also rejected on validation evidence:
+
+| Model | Raw Brier → sigmoid | Raw log loss → sigmoid |
+|---|---|---|
+| Logistic Regression | 0.144997 → 0.145697 | 0.454130 → 0.456108 |
+| HistGradientBoosting | 0.145036 → 0.145426 | 0.454597 → 0.456020 |
+
+Lower is better for both scores. Sigmoid made both worse. Ten-bin reliability
+tables, counts, ECE, and full metrics appear in
+[model_comparison.json](reports/model_comparison.json). Isotonic was excluded in
+advance to limit calibration flexibility with modest positive sample counts.
+
+Final **held-out** evaluation after freezing the decision:
+
+| Metric | Logistic Regression | HistGradientBoosting |
+|---|---:|---:|
+| ROC-AUC | 0.7502 | 0.7543 |
+| PR-AUC (AP) | 0.4822 | 0.4961 |
+| Precision@10% / top-10% conversion rate | 59.00% | 62.00% |
+| Recall@10% | 27.44% | 28.84% |
+| Lift@10% | 2.7442× | 2.8837× |
+| Brier | 0.143269 | 0.141717 |
+| Log loss | 0.451095 | 0.446661 |
+| Overall test conversion rate | 21.50% | 21.50% |
+
+The challenger scored better on this test sample, but changing the choice now
+would contaminate model selection. The baseline remains selected. The original
+v0.1 baseline ranking metrics reproduce; no generator or threshold was retuned.
+
+**Ranking and calibration are different.** Ranking determines who reaches the top
+of the queue; calibration asks whether assigned probabilities match observed
+rates. A monotonic sigmoid can change probabilities while leaving rankings
+unchanged. Future probability thresholds need calibration evidence, not just good
+lift. All probabilities here still describe synthetic data, not real customers.
+
+The baseline's top validation permutation signals are **test-drive activity,
+appointment activity, and purchase timeline**. The report also includes transformed
+Logistic Regression coefficients and challenger permutation importance. These
+measure fitted-model reliance, not causal effects; correlated inputs and imputation
+complicate interpretation. No SHAP or customer-level explanation service is added.
+
+The main remaining limitation is synthetic-only validation. One validation split
+also has sampling uncertainty. The preserved test set was already viewed in v0.1;
+repeated test comparisons must not become a tuning loop.
 
 ## Synthetic data disclaimer
 
@@ -88,15 +156,19 @@ Use Python 3.11+ from the repository root, preferably in a virtual environment:
 
 ```bash
 python -m pip install -r requirements.txt
-python scripts/train_baseline.py
+python scripts/compare_models.py
 python -m pytest -q
 ```
 
 `requirements.txt` installs the local package and pytest; dependency pins live in
-`pyproject.toml` to avoid maintaining two version lists. The command generates
-small JSON reports in `reports/`, prints metrics and the ranked table, and saves
-an ignored local pipeline in `artifacts/baseline.joblib`. Re-running overwrites
-these outputs. Only load trusted joblib files.
+`pyproject.toml` to avoid maintaining two version lists. The v0.2 command writes `reports/model_comparison.json`, freezes selection in
+`artifacts/v02/selection_frozen.json` before test predictions, and saves
+`artifacts/v02/selected_model.joblib`. It never overwrites the historical v0.1
+report. Re-running reproduces the frozen experiment and overwrites its v0.2
+outputs; it must not guide further test-based choices. Only load trusted joblib files.
+
+The v0.1 command remains `python scripts/train_baseline.py`; use a separate output
+folder when rerunning it to preserve the recorded historical metrics.
 
 To evaluate a different staffing budget without overwriting the recorded run:
 
@@ -109,7 +181,7 @@ threshold are fixed; future model selection must use training-only validation.
 
 Code is in one `src/lead_intelligence/` package: `data.py`, `model.py`,
 `evaluation.py`, `validation.py`, and `experiment.py`. The small `scripts/` entry
-point delegates to that package. Five tests cover generation, schema/target,
+point delegates to that package. Tests cover generation, schema/target,
 missing/unseen inference, probabilities, serialization, ranking calculations,
 and held-out table/label alignment. There are no empty architectural layers.
 
@@ -118,7 +190,7 @@ and held-out table/label alignment. There are no empty architectural layers.
 | Version | Scope |
 |---|---|
 | v0.1 | Baseline ranking system — implemented |
-| v0.2 | Compare one stronger tree-based model, calibration, explainability |
+| v0.2 | Model comparison, calibration, lightweight explainability — implemented |
 | v0.3 | Decision layer: probability → priority → recommended action |
 | v0.4 | FastAPI |
 | v0.5 | Docker and final portfolio polish |

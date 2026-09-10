@@ -20,3 +20,16 @@ def build_pipeline() -> Pipeline:
                                         remainder="drop")),
         ("classifier", LogisticRegression(max_iter=1000, solver="lbfgs", C=1.0)),
     ])
+
+
+def build_challenger(seed: int = 42) -> Pipeline:
+    """One restrained nonlinear configuration; dense encoding fits this small schema."""
+    from sklearn.ensemble import HistGradientBoostingClassifier
+
+    pipeline = build_pipeline()
+    pipeline.named_steps["preprocess"].set_params(sparse_threshold=0)
+    pipeline.set_params(classifier=HistGradientBoostingClassifier(
+        max_iter=100, learning_rate=.05, max_leaf_nodes=7,
+        min_samples_leaf=40, l2_regularization=1.0,
+        early_stopping=False, random_state=seed))
+    return pipeline
