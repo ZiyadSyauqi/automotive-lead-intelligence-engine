@@ -1,115 +1,80 @@
-# Product and data contract
+# Kontrak product dan data
 
-## Decision and user
+## Siapa pengguna dan keputusan yang dibantu?
 
-The user is a dealership sales representative or team lead deciding which eligible
-leads to contact next with limited staff time. The eventual product ranks leads,
-assigns priority, suggests a next action, and explains the recommendation. v0.1
-implements only the offline probability/ranking baseline and its evaluation.
+Sales representative atau team lead perlu memilih lead yang diprioritaskan saat
+waktu follow-up terbatas. Model mengestimasi score conversion; decision policy
+v0.3 menggabungkan ranking dengan kondisi operasional untuk memberi satu tindakan.
+Saran tetap direview manusia. Pipeline tidak mengirim pesan atau mengakses CRM.
 
-**Prediction:** probability that an open lead completes a vehicle purchase within
-the 30 days after a scoring snapshot, conditional on observed interactions and the
-assumed sales process. A completed purchase is the conceptual target; the public
-dataset contains a fictional binary draw, with no invoice or customer records.
+Snapshot adalah **hari ketujuh setelah lead dibuat**, hanya untuk lead yang masih
+open dan belum membeli. Target `converted` berarti pembelian dalam **30 hari
+setelah snapshot**. Semua aktivitas hanya berasal dari window tujuh hari sebelum
+scoring. Timeline berarti sisa hari menuju rencana beli, bukan umur lead.
+Response latency adalah rata-rata waktu customer merespons, bukan SLA salesperson.
 
-**Snapshot:** seven days after lead creation, restricted to leads still open and
-not converted at that point. All interaction counts and statuses describe only
-that first seven-day window. Purchase timeline is the prospect's estimate of days
-remaining as of scoring. Each row is a different fictional lead. A requested or
-scheduled activity was recorded before the snapshot; a completed or attended
-activity happened before it. Response latency is the mean customer response time
-to outbound contact in that window, not a future salesperson response SLA.
+Satu row mewakili satu lead fiktif yang independen. Day-zero scoring dan snapshot
+berulang membutuhkan kontrak serta evaluasi baru. Pada data nyata, outcome yang
+belum punya window lengkap tidak boleh diam-diam diberi label negatif; customer
+berulang perlu grouping dan timestamps harus diaudit.
 
-This first cohort deliberately excludes immediate scoring of brand-new leads.
-Applying its model to day-zero leads or daily repeat snapshots requires a revised
-data contract, evaluation, and grouping by customer. In a real dataset, only
-snapshots with a complete 30-day outcome window would be eligible for training;
-unresolved outcomes must not be silently labeled negative.
+## Schema
 
-## Intended action and boundaries
-
-The future queue will recommend whom to contact and when, with a human retaining
-control. A contact-within-two-hours action is a possible v0.3 policy, not a
-learned causal conclusion or an implemented service. Contact consent, suppression
-lists, business hours, duplicate handling, and reachable status must gate a real
-queue. The current top-K evaluation ranks the full synthetic cohort; it does not
-yet apply those eligibility rules or promise K successful contacts.
-
-Conversion propensity is not the incremental benefit of contacting a lead. High
-propensity leads may buy anyway. This project does not measure causal uplift,
-revenue, salesperson productivity gains, financing eligibility, customer worth,
-or fairness in real deployment. It does not deny service, approve credit, send
-messages, ingest a CRM, or use an LLM. No personal identifiers or protected
-attributes are generated. Their absence does not establish fairness.
-
-## Synthetic schema
-
-| Field | Values / units | Snapshot meaning |
+| Field | Nilai / satuan | Makna |
 |---|---|---|
-| lead_id | Unique integer | Bookkeeping only; excluded from ML |
-| purchase_timeline_days | 1–365; sometimes missing | Stated days until intended purchase |
-| contactability | reachable / intermittent / unreachable | Observed contact status |
-| financing_interest | yes / no / undecided; sometimes missing | Expressed interest, not creditworthiness |
-| test_drive_activity | none / requested / completed | Latest recorded status |
-| vehicle_price_segment | entry / mid / premium | Fictional relative segment; no price or brand |
-| previous_interactions | 0–20 | Customer interactions, excluding outbound follow-up attempts |
-| follow_up_count | 0–12 | Outbound follow-up attempts |
-| lead_source | website / marketplace / walk_in / referral / event | Acquisition channel |
-| trade_in_interest | yes / no / undecided | Expressed interest |
-| response_latency_hours | 0.1–168; sometimes missing | Mean observed customer response delay |
-| appointment_activity | none / scheduled / attended / missed | Latest appointment status |
-| converted | 0 / 1 | Purchase after snapshot within 30 days; target only |
+| lead_id | Integer unik | Identitas teknis, bukan feature model |
+| purchase_timeline_days | 1–365; bisa missing | Sisa hari menuju rencana beli |
+| contactability | reachable / intermittent / unreachable | Status kontak observasi |
+| financing_interest | yes / no / undecided; bisa missing | Minat financing, bukan kelayakan kredit |
+| test_drive_activity | none / requested / completed | Status test drive |
+| vehicle_price_segment | entry / mid / premium | Segmen relatif fiktif |
+| previous_interactions | 0–20 | Interaksi customer, tidak termasuk upaya follow-up outbound |
+| follow_up_count | 0–12 | Jumlah upaya follow-up outbound |
+| lead_source | website / marketplace / walk_in / referral / event | Kanal akuisisi |
+| trade_in_interest | yes / no / undecided | Minat trade-in |
+| response_latency_hours | 0.1–168; bisa missing | Rata-rata waktu respons customer |
+| appointment_activity | none / scheduled / attended / missed | Status appointment |
+| converted | 0 / 1 | Target setelah snapshot; tidak diteruskan ke decision |
 
-No proprietary records, organization-specific terminology, credentials, or
-confidential policies are used. The schema and relationships are author-designed
-assumptions, not claims about real automotive customers. Test drives and sales
-appointments are separate activities, so a test drive does not require the
-appointment field to be attended.
+Test drive dan appointment dianggap aktivitas berbeda. Test drive completed tidak
+mengharuskan appointment attended. Tidak ada PII, protected attributes, data
+perusahaan, atau aturan internal. Tidak adanya protected attributes bukan bukti fairness.
 
-## Generating assumptions
+## Asumsi generator
 
-A private normal latent-intent variable correlates timelines, interactions,
-response delays, appointments, and test drives. A logistic score combines these
-observations with hidden intent and additional normal noise (standard deviation
-0.85). Short timelines, completed drives, and attended appointments have stronger
-positive effects; financing, trade-in, source, and segment are deliberately weak.
-Interaction effects, saturated interaction counts, and penalties for excessive
-follow-ups depart from a purely linear relationship. These are associations in
-the simulator, not estimates of what changing a feature would cause.
+Latent intent normal memengaruhi timeline, interaksi, respons, appointment, dan
+test drive. Score logistik menggabungkan feature dengan latent intent dan noise
+normal tambahan (standard deviation 0.85). Timeline pendek, test drive completed,
+dan appointment attended diberi signal lebih kuat. Financing, trade-in, source,
+dan segment sengaja lemah. Ada interaction effects, saturasi interaksi, dan
+penalti follow-up berlebih agar hubungan tidak sepenuhnya linear.
 
-Probability is `0.025 + 0.95 * sigmoid(score)`; a Bernoulli draw produces the label.
-Thus even high-intent leads can fail and low-intent leads can convert. Roughly 5%
-recording gaps are added to timeline, latency, and financing. Unreachable leads
-have no measured latency. Missingness is added after outcome generation from
-complete latent observations, so the model sees less information than the
-simulator. Hidden intent, score, and probability are never exported.
+Probability simulator: `0.025 + 0.95 * sigmoid(score)`. Label diambil lewat
+Bernoulli draw, jadi lead kuat bisa gagal dan lead lemah bisa convert. Sekitar 5%
+recording gaps ditambahkan pada timeline, latency, dan financing. Unreachable
+selalu tidak punya latency terukur. Missingness ditambahkan setelah outcome
+dibentuk dari observasi lengkap; model melihat informasi lebih sedikit. Latent
+intent, score simulator, dan probability pembentuk label tidak diekspor.
 
-## Leakage and evaluation protocol
+Hubungan ini adalah asumsi demonstrasi, **bukan temuan tentang customer automotive**.
+Mengubah feature bukan bukti bahwa conversion akan ikut berubah secara causal.
 
-- Split independent leads 80/20 with stratification and seed 42 before exploration
-  or fitting. Explore training data only; hold test data for the single fixed baseline.
-- Fit imputation, scaling, category encoding, and Logistic Regression only on
-  training features using Pipeline / ColumnTransformer. Explicitly exclude ID and
-  target; do not derive fields from post-purchase activity.
-- Automated checks catch schema changes, duplicate IDs, invalid targets, and exact
-  numeric target copies. They cannot prove point-in-time correctness. With real
-  data, audit timestamps, duplicated people, censoring, and sales-process effects;
-  use a temporal holdout and customer grouping instead of assuming IID rows.
-- Use unweighted Logistic Regression, C=1, max_iter=1000. Avoid class reweighting
-  merely to raise recall: it changes probability interpretation. Threshold 0.5 is
-  fixed for reference metrics; it is not a sales policy.
-- PR-AUC here means average precision. Confusion matrix rows are actual 0/1 and
-  columns predicted 0/1. Zero-division threshold metrics return zero.
-- Capacity defaults to top 10% of test leads, `K = ceil(fraction * test_size)`.
-  Precision@K is conversions among selected / K; Recall@K is selected conversions
-  / all conversions; Lift@K is Precision@K / test conversion prevalence. Random
-  ranking expectations are prevalence, K/N, and 1, respectively. Stable input order
-  breaks score ties. For no positives, recall and lift are undefined (`null`).
+## Leakage dan evaluasi
 
-Ranking metrics answer whether a fixed contact budget concentrates likely buyers.
-They do not establish additional sales caused by the queue. Reported probabilities
-are fitted synthetic propensities, not validated real-world probabilities. The
-single held-out estimate has sampling uncertainty; no confidence interval or
-calibration claim is made. Do not tune models, K, or thresholds to this test set in
-v0.2: use training-only cross-validation for selection and retain this baseline
-protocol for comparison. Repeated test comparisons eventually require a new holdout.
+- Seed 42 dan stratified 80/20 split sebelum fitting; ID dan target dikeluarkan lewat allowlist.
+- Median imputation, missing indicators, scaling, dan one-hot encoding fit hanya pada train.
+- Validasi otomatis mengecek schema, ID, target, dan exact numeric target copies;
+  validitas waktu tetap asumsi karena tidak ada real timestamps.
+- Baseline Logistic Regression memakai C=1, lbfgs, max_iter=1000 tanpa class weighting.
+  Threshold 0.5 hanya untuk metric klasifikasi historis, bukan policy sales.
+- PR-AUC berarti average precision. Confusion matrix: baris actual 0/1, kolom predicted 0/1.
+- K = ceil(fraction × jumlah lead test). Precision@K = selected conversions / K;
+  Recall@K = selected conversions / seluruh conversions; Lift@K = Precision@K / prevalence.
+  Random ranking punya ekspektasi prevalence, K/N, dan lift 1. Tie ranking metric
+  memakai urutan input stabil. Tanpa positives, recall/lift adalah null.
+- v0.2 melakukan selection di train/validation; v0.3 hanya memakai pilihan beku.
+
+Model mengukur propensity, bukan causal uplift. Tidak ada klaim revenue, fairness,
+creditworthiness, atau kenaikan produktivitas. Perbandingan berulang pada holdout
+tidak boleh menjadi jalur tuning; data nyata membutuhkan temporal holdout dan
+audit censoring. Detail operasional ada di [decision policy](decision-policy.md).

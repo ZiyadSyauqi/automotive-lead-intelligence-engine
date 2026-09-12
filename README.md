@@ -1,198 +1,179 @@
 # Automotive Lead Intelligence Engine
 
-## Problem
+Tim sales bisa menerima lebih banyak lead daripada yang sempat mereka follow up.
+Project ini membantu menjawab dua pertanyaan: **lead mana yang perlu diprioritaskan,
+dan apa tindakan berikutnya?** Semua berjalan lokal, tanpa layanan berbayar.
 
-Dealership sales teams may receive more leads than they can immediately follow
-up. This creates a prioritization problem: which leads should receive their
-limited attention first?
+Model → score/ranking → Decision Engine → priority + action + reason codes
 
-## Product concept
+Model belajar pola dari data. **Decision policy adalah aturan demo yang ditulis
+engineer**, bukan rekomendasi yang dipelajari model. Pemisahan ini membuat model
+bisa diganti tanpa menulis ulang seluruh policy, dan policy bisa direvisi tanpa
+retraining. Alasan tiap keputusan juga bisa diaudit.
 
-Lead Data → Conversion Model → Ranked Leads → later Priority / Recommended Action / Explanation
+## Progress
 
-The current user is a sales representative or team lead reviewing a ranked queue.
-The model estimates purchase probability within 30 days after a scoring snapshot.
-For this first cohort, the snapshot is seven days after lead creation, for leads
-still open then. It does not yet score brand-new leads at arrival.
+- **v0.1:** synthetic leads, preprocessing, Logistic Regression, ranking, dan business metrics.
+- **v0.2:** satu challenger HistGradientBoosting, evaluasi calibration, model selection
+  berbasis validation, coefficients, dan permutation importance.
+- **v0.3:** decision policy deterministik, tujuh action, reason codes, formatter
+  Indonesia, batch output, dan sanity checks. Model tetap Logistic Regression
+  tanpa calibration, sesuai keputusan v0.2.
 
-## v0.1 — baseline lead ranking
+FastAPI, Docker, frontend, LLM, SHAP, database, cloud deployment, dan CI/CD belum
+ada. Tidak ada kontak pelanggan yang dikirim otomatis.
 
-- Reproducible 5,000-lead synthetic generator with numerical and categorical inputs.
-- Training-only imputation, scaling, and OneHotEncoder in a ColumnTransformer/Pipeline.
-- Logistic Regression with an 80/20 stratified split and seed 42.
-- Conversion probabilities, ranked leads, threshold metrics, and top-10% evaluation.
-- A printed table of the top 10 held-out leads: `lead_id`, `conversion_probability`,
-  and `actual_conversion`. Actual outcomes are for offline evaluation only.
+## Cara menjalankan
 
-Priority rules, recommended actions, FastAPI, Docker, LLMs, SHAP, frontend,
-cloud deployment, MLflow, Kubernetes, databases, and CI/CD are not implemented.
-
-## v0.2 — comparison, calibration, and model reliance
-
-Added exactly one challenger (HistGradientBoosting), training-only sigmoid
-calibration evaluation, and lightweight feature-reliance analysis. The original
-v0.1 report is preserved. [Audit and protocol](docs/model-selection.md) document
-what was checked against the code and how selection was frozen before testing.
-
-The original 1,000-lead test set stays separate. The original 4,000 training leads
-are split into 3,000 fit / 1,000 validation leads. Calibration uses three-fold CV
-inside the fit portion, including preprocessing. There is one fixed configuration
-per family, with raw and sigmoid variants; no broad tuning search.
-
-Actual **validation** results (the source of model selection):
-
-| Model | PR-AUC (AP) | Lift@10% | Brier | Complexity |
-|---|---:|---:|---:|---|
-| Logistic Regression | 0.4677 | 2.5701 | 0.1450 | LOW |
-| HistGradientBoosting | 0.4648 | 2.5701 | 0.1450 | MEDIUM |
-
-**KEEP BASELINE — uncalibrated Logistic Regression.** Challenger AP gain was
--0.002910 and lift gain was zero. Neither meets the predeclared requirements of
-at least +0.02 AP and +0.15 lift, with at most +0.005 Brier deterioration.
-Complexity did not earn its place. These are project criteria, not significance tests.
-
-Calibration was also rejected on validation evidence:
-
-| Model | Raw Brier → sigmoid | Raw log loss → sigmoid |
-|---|---|---|
-| Logistic Regression | 0.144997 → 0.145697 | 0.454130 → 0.456108 |
-| HistGradientBoosting | 0.145036 → 0.145426 | 0.454597 → 0.456020 |
-
-Lower is better for both scores. Sigmoid made both worse. Ten-bin reliability
-tables, counts, ECE, and full metrics appear in
-[model_comparison.json](reports/model_comparison.json). Isotonic was excluded in
-advance to limit calibration flexibility with modest positive sample counts.
-
-Final **held-out** evaluation after freezing the decision:
-
-| Metric | Logistic Regression | HistGradientBoosting |
-|---|---:|---:|
-| ROC-AUC | 0.7502 | 0.7543 |
-| PR-AUC (AP) | 0.4822 | 0.4961 |
-| Precision@10% / top-10% conversion rate | 59.00% | 62.00% |
-| Recall@10% | 27.44% | 28.84% |
-| Lift@10% | 2.7442× | 2.8837× |
-| Brier | 0.143269 | 0.141717 |
-| Log loss | 0.451095 | 0.446661 |
-| Overall test conversion rate | 21.50% | 21.50% |
-
-The challenger scored better on this test sample, but changing the choice now
-would contaminate model selection. The baseline remains selected. The original
-v0.1 baseline ranking metrics reproduce; no generator or threshold was retuned.
-
-**Ranking and calibration are different.** Ranking determines who reaches the top
-of the queue; calibration asks whether assigned probabilities match observed
-rates. A monotonic sigmoid can change probabilities while leaving rankings
-unchanged. Future probability thresholds need calibration evidence, not just good
-lift. All probabilities here still describe synthetic data, not real customers.
-
-The baseline's top validation permutation signals are **test-drive activity,
-appointment activity, and purchase timeline**. The report also includes transformed
-Logistic Regression coefficients and challenger permutation importance. These
-measure fitted-model reliance, not causal effects; correlated inputs and imputation
-complicate interpretation. No SHAP or customer-level explanation service is added.
-
-The main remaining limitation is synthetic-only validation. One validation split
-also has sampling uncertainty. The preserved test set was already viewed in v0.1;
-repeated test comparisons must not become a tuning loop.
-
-## Synthetic data disclaimer
-
-All leads are fictional because this is a public portfolio without a suitable
-real customer dataset. The simulated relationships are demonstration assumptions,
-**not empirical claims about automotive customers**. No company data or credentials
-are used. No generated CSV or model binary is committed.
-
-Inputs cover purchase timeline, contactability, financing, test drives,
-appointments, trade-in interest, follow-ups, interactions, response latency,
-source, and vehicle segment. Existing categorical statuses preserve more detail
-than booleans (for example, requested versus completed test drive). The binary
-target is `converted`.
-
-Hidden intent, random noise, nonlinear effects, missing observations, and a
-Bernoulli outcome draw create overlapping classes. Financing, source, and vehicle
-segment are weak predictors. Hidden generating scores/probabilities, lead ID, and
-target are excluded from training. Preprocessing fits only on training data.
-See [product and data contract](docs/product-and-data.md) for the exact schema,
-label timing, and leakage assumptions, and [exploratory findings](docs/week1-findings.md)
-for training-only validation.
-
-## Evaluation
-
-Actual execution with 5,000 leads, seed 42, Python 3.12.14, and 1,000 test leads:
-
-| Metric | Result |
-|---|---:|
-| Overall conversion rate (test cohort; lift denominator) | 21.50% (215/1,000) |
-| Full generated dataset conversion rate | 21.46% (1,073/5,000) |
-| Top-10% conversion rate | 59.00% (59/100) |
-| Precision@10% | 0.5900 |
-| Recall@10% | 0.2744 |
-| Lift@10% | 2.7442× |
-| ROC-AUC | 0.7502 |
-| PR-AUC (average precision) | 0.4822 |
-| Precision at threshold 0.5 | 0.6800 |
-| Recall at threshold 0.5 | 0.1581 |
-| F1 at threshold 0.5 | 0.2566 |
-
-Confusion matrix at 0.5 (rows actual 0/1, columns predicted 0/1):
-`[[769, 16], [181, 34]]`. Full results, top 10 leads, dependency versions, and data
-fingerprint are in [baseline_metrics.json](reports/baseline_metrics.json).
-
-For a sales team prioritizing 10% of leads, K = ceil(0.10 × test cohort size).
-Precision@10% = selected conversions / K; Recall@10% = selected conversions / all
-test conversions; Lift@10% = selected conversion rate / overall test conversion
-rate. Stable input order breaks score ties. The capacity fraction is configurable.
-
-The queue captures 59 of 215 converters; random selection would capture 21.5 in
-expectation. It still includes 41 nonconverters and misses 156 converters. AUC
-0.7502 and these errors show this is not a near-perfect synthetic exercise.
-**Lift measures concentration, not additional sales caused by contacting leads.**
-Real-world probability calibration and business value remain unvalidated.
-
-## How to run
-
-Use Python 3.11+ from the repository root, preferably in a virtual environment:
+Gunakan Python 3.11+ dari root repo, idealnya di virtual environment:
 
 ```bash
 python -m pip install -r requirements.txt
-python scripts/compare_models.py
+# Fresh clone: bangun kembali model yang SUDAH dipilih, tanpa membuka model selection.
+python scripts/score_leads.py --rebuild-model
+# Berikutnya, pakai artifact yang sama:
+python scripts/score_leads.py
 python -m pytest -q
 ```
 
-`requirements.txt` installs the local package and pytest; dependency pins live in
-`pyproject.toml` to avoid maintaining two version lists. The v0.2 command writes `reports/model_comparison.json`, freezes selection in
-`artifacts/v02/selection_frozen.json` before test predictions, and saves
-`artifacts/v02/selected_model.joblib`. It never overwrites the historical v0.1
-report. Re-running reproduces the frozen experiment and overwrites its v0.2
-outputs; it must not guide further test-based choices. Only load trusted joblib files.
+`--rebuild-model` hanya refit Logistic Regression dengan parameter beku pada
+4.000 train rows yang tercatat di report v0.2. Tidak ada challenger, tuning,
+calibration, atau evaluasi test di jalur ini. Tanpa flag, artifact harus sudah ada.
+Binary model dan CSV batch tidak di-commit. Load joblib hanya dari sumber lokal
+tepercaya; file tersebut bisa menjalankan kode saat dibuka.
 
-The v0.1 command remains `python scripts/train_baseline.py`; use a separate output
-folder when rerunning it to preserve the recorded historical metrics.
+Output lokal:
 
-To evaluate a different staffing budget without overwriting the recorded run:
+- `artifacts/v02/selected_model.joblib`: pipeline model pilihan.
+- `artifacts/v03/decisions.csv`: semua lead, score, percentile, priority, action, reason codes.
+- `artifacts/v03/decision_summary.json`: distribusi, checks, fingerprint, dan contoh.
+- [reports/decision_summary.json](reports/decision_summary.json): salinan ringkasan run yang direview.
+
+CLI menampilkan sepuluh lead dengan score tertinggi dan ringkasan distribusi.
+Jalur v0.1/v0.2 tetap tersedia; untuk reproduksi, arahkan ke folder terpisah agar
+report historis tidak tertimpa:
 
 ```bash
-python scripts/train_baseline.py --capacity-fraction 0.2 --output artifacts/capacity-check --artifacts artifacts/capacity-check
+python scripts/train_baseline.py --output artifacts/reproduce-v01 --artifacts artifacts/reproduce-v01
+python scripts/compare_models.py --output artifacts/reproduce-v02/model_comparison.json --artifacts artifacts/reproduce-v02
 ```
 
-Choose capacity from staffing, not test-set results. The baseline model and
-threshold are fixed; future model selection must use training-only validation.
+## Policy v0.3
 
-Code is in one `src/lead_intelligence/` package: `data.py`, `model.py`,
-`evaluation.py`, `validation.py`, and `experiment.py`. The small `scripts/` entry
-point delegates to that package. Tests cover generation, schema/target,
-missing/unseen inference, probabilities, serialization, ranking calculations,
-and held-out table/label alignment. There are no empty architectural layers.
+Percentile adalah persentase lead dalam batch yang punya score **strictly lebih
+rendah**. Score sama mendapat percentile sama; batch dengan semua score sama
+mendapat percentile nol. Hasil tergantung komposisi batch dan tidak setara dengan
+probability yang terkalibrasi. Batch kecil kurang cocok untuk menentukan kapasitas.
+
+Aturan dievaluasi berurutan; kondisi pertama yang cocok menentukan satu action:
+
+| Kondisi | Priority | Action |
+|---|---|---|
+| Status kontak unknown; atau status appointment/test drive unknown saat reachable | MEDIUM | REVIEW_LEAD_DATA |
+| Kontak intermittent/unreachable | MEDIUM jika percentile ≥60, selain itu LOW | RETRY_CONTACT |
+| Follow-up ≥5 dan latency ≥48 jam, tanpa appointment scheduled | MEDIUM jika percentile ≥90, selain itu LOW | NURTURE |
+| Percentile ≥90, timeline ≤14 hari, reachable, angka operasional lengkap | URGENT | CONTACT_NOW |
+| Appointment scheduled | HIGH | CONFIRM_APPOINTMENT |
+| Test drive completed | HIGH jika percentile ≥90, selain itu MEDIUM | FOLLOW_UP_TEST_DRIVE |
+| Percentile ≥90 | HIGH | STANDARD_FOLLOW_UP |
+| Percentile ≥60, interaksi ≥3, atau appointment attended | MEDIUM | STANDARD_FOLLOW_UP |
+| Sisanya | LOW | NURTURE |
+
+Semua threshold ada di `decision.py`. **Ini asumsi policy portfolio, bukan policy
+dealer yang tervalidasi.** URGENT dibatasi maksimal 10% batch oleh ranking dan
+sanity check. HIGH bisa melebihi 10% karena komitmen appointment perlu ditangani.
+Priority bukan SLA otomatis atau quota total kontak.
+
+Contoh aktual: **lead 4320**, score **0.829229**, percentile **99.9**, menghasilkan
+**URGENT / CONTACT_NOW** dengan reason codes:
+`HIGH_MODEL_SCORE`, `SHORT_PURCHASE_TIMELINE`, `CONTACTABLE`.
+Formatter menjelaskan bahwa lead masuk kelompok score tertinggi, rencana pembelian
+maksimal 14 hari, dan masih reachable. Score tersebut **bukan klaim peluang beli 82,9%**.
+
+Run 1.000 lead menggunakan membership test v0.2, tanpa memberikan target ke policy:
+
+| Priority | Jumlah | Persentase |
+|---|---:|---:|
+| URGENT | 9 | 0.9% |
+| HIGH | 140 | 14.0% |
+| MEDIUM | 375 | 37.5% |
+| LOW | 476 | 47.6% |
+
+| Action | Jumlah | Persentase |
+|---|---:|---:|
+| CONTACT_NOW | 9 | 0.9% |
+| CONFIRM_APPOINTMENT | 76 | 7.6% |
+| FOLLOW_UP_TEST_DRIVE | 113 | 11.3% |
+| RETRY_CONTACT | 400 | 40.0% |
+| NURTURE | 167 | 16.7% |
+| STANDARD_FOLLOW_UP | 235 | 23.5% |
+| REVIEW_LEAD_DATA | 0 | 0.0% |
+
+Kelompok score tinggi mendapat lima jenis action. REVIEW_LEAD_DATA nol pada run
+ini karena status kategorikal generator lengkap; fallback-nya diuji lewat tests.
+[Detail policy dan audit](docs/decision-policy.md) mencakup precedence, missing
+values, ties, asumsi kontak, dan batas penggunaan.
+
+## Hasil model yang dipertahankan
+
+Model selection v0.2 memakai 3.000 fit / 1.000 validation dari train portion.
+Challenger tidak lolos syarat improvement validation: AP **0.4648 vs 0.4677**
+untuk baseline, dengan lift sama **2.5701×**. Sigmoid memperburuk Brier/log loss
+keduanya. Karena itu **KEEP BASELINE**, walaupun challenger kebetulan lebih baik
+pada test. Memilih ulang berdasarkan test akan melanggar disiplin model selection.
+
+| Metric test historis | Logistic Regression | HistGradientBoosting |
+|---|---:|---:|
+| ROC-AUC | 0.7502 | 0.7543 |
+| PR-AUC (average precision) | 0.4822 | 0.4961 |
+| Precision@10% | 59.00% | 62.00% |
+| Recall@10% | 27.44% | 28.84% |
+| Lift@10% | 2.7442× | 2.8837× |
+| Brier score | 0.143269 | 0.141717 |
+| Log loss | 0.451095 | 0.446661 |
+
+Conversion rate test: 21.50%; seluruh synthetic dataset: 21.46%. Hasil ini berasal
+dari report historis, **tidak dihitung ulang untuk memilih policy v0.3**.
+Ranking menentukan urutan lead; calibration menilai kecocokan probability dengan
+frekuensi outcome. Keduanya berbeda. Lift juga bukan tambahan penjualan akibat kontak.
+
+## Data dan batasan
+
+5.000 lead adalah data **synthetic**. Snapshot dibuat tujuh hari setelah lead masuk,
+untuk lead yang masih open, dengan target pembelian dalam 30 hari berikutnya.
+Model ini belum ditujukan untuk lead baru di hari nol. Generator mengandung noise,
+latent intent, missing values, weak predictors, dan kelas yang saling overlap.
+Tidak ada data perusahaan, identitas customer, atau business logic rahasia.
+
+Decision policy juga synthetic/demo. Action belum terbukti meningkatkan conversion;
+intervention effectiveness belum diukur. Score bersifat predictive, bukan causal.
+Threshold production harus mempertimbangkan kapasitas nyata, biaya intervensi,
+expected value, dan production data—bukan optimasi test outcome. Consent,
+suppression list, jam kontak, dan batas kontak lintas hari belum tersedia: semua
+action adalah saran yang harus direview manusia, bukan izin menghubungi customer.
+
+## Struktur dan dokumentasi
+
+Satu package `src/lead_intelligence/` memisahkan data, model, evaluation, comparison,
+dan decision. `scripts/score_leads.py` menjalankan batch melalui `decision_demo.py`.
+Tidak ada layer kosong atau framework konfigurasi tambahan.
+
+- [Kontrak product dan data](docs/product-and-data.md)
+- [Temuan eksplorasi v0.1](docs/week1-findings.md)
+- [Audit dan model selection v0.2](docs/model-selection.md)
+- [Policy dan audit v0.3](docs/decision-policy.md)
+
+Tests memeriksa pipeline, metric, split, serialization, policy precedence, input
+invalid, missing values, score ties, label independence, dan alignment lead_id.
+Report JSON historis mempertahankan isi serta field asli untuk reproducibility.
+LICENSE MIT tetap memakai teks legal aslinya.
 
 ## Roadmap
 
-| Version | Scope |
+| Versi | Scope |
 |---|---|
-| v0.1 | Baseline ranking system — implemented |
-| v0.2 | Model comparison, calibration, lightweight explainability — implemented |
-| v0.3 | Decision layer: probability → priority → recommended action |
-| v0.4 | FastAPI |
-| v0.5 | Docker and final portfolio polish |
-
-MIT licensed; see [LICENSE](LICENSE).
+| v0.1 | Baseline ranking — selesai |
+| v0.2 | Model comparison + calibration — selesai |
+| v0.3 | Decision layer — selesai |
+| v0.4 | FastAPI prediction/decision service |
+| v0.5 | Docker + portfolio polish |

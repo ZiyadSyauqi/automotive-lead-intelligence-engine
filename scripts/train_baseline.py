@@ -1,4 +1,4 @@
-"""Run from the repository root after pip install -r requirements.txt."""
+"""Jalankan dari root repo setelah pip install -r requirements.txt."""
 
 from lead_intelligence.experiment import main
 

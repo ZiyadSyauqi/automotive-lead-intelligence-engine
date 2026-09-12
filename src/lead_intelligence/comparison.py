@@ -1,4 +1,4 @@
-"""Training-only selection followed by a frozen, one-pass holdout comparison."""
+"""Model selection hanya di training; evaluasi holdout dilakukan setelah pilihan beku."""
 
 import argparse
 import hashlib
@@ -148,7 +148,7 @@ def write_json(path: Path, payload: dict) -> None:
 
 def run_comparison(history: Path, output: Path, artifacts: Path) -> dict:
     if output.resolve() == history.resolve():
-        raise ValueError("The historical report must not be overwritten")
+        raise ValueError("Report historis tidak boleh ditimpa")
     historical_bytes = history.read_bytes()
     protocol = json.loads(historical_bytes)["protocol"]
     seed = protocol["seed"]
@@ -199,8 +199,9 @@ def main() -> None:
     parser.add_argument("--artifacts", type=Path, default=Path("artifacts/v02"))
     args = parser.parse_args()
     if args.output.resolve() == args.history.resolve():
-        parser.error("The historical report must not be overwritten")
+        parser.error("Report historis tidak boleh ditimpa")
     report = run_comparison(args.history, args.output, args.artifacts)
+    print("Hasil model selection beku dan evaluasi holdout (field report tetap berbahasa Inggris):")
     print(json.dumps({"selection": report["selection"],
                       "final_held_out_metrics": report["final_held_out_metrics"]}, indent=2))
 

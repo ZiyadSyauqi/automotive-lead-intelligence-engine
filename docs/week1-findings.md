@@ -1,24 +1,22 @@
-# v0.1 exploratory findings
+# Temuan eksplorasi v0.1
 
-Protocol: default 5,000-row generator, seed 42. These observations use only the
-4,000 training rows. Full counts, distributions and rates are in
-`reports/data_validation.json`; evaluation on held-out rows is separate.
+Eksplorasi memakai 4.000 train rows dari generator 5.000 lead, seed 42. Report
+lengkap: `reports/data_validation.json`. Test metrics dilaporkan terpisah.
 
-| Question | Observation | Modeling / product consequence |
+| Pertanyaan | Observasi | Implikasi |
 |---|---|---|
-| Is conversion imbalanced? | 858 / 4,000 (21.45%) convert | Accuracy alone is inadequate; report PR and ranking metrics |
-| Where is data incomplete? | Timeline: 191 missing; latency: 649; financing: 206; ID and outcome: zero | Fit median/missing-indicator and categorical imputation on training data |
-| Does shorter stated timeline associate with conversion? | Lowest timeline quartile: 34.94%; highest: 11.18% | Useful signal with substantial overlap; neither group determines outcome |
-| Does completed activity carry signal? | Completed test drive: 37.40%; no drive: 17.01%. Attended appointment: 31.22%; none: 17.79% | Keep pre-snapshot activity, but do not interpret association as treatment effect |
-| Is source a reliable standalone ranking rule? | Source rates range only from 20.66% to 22.52% | Deliberately weak predictor; even the simulator's small referral effect does not guarantee an observed advantage |
-| Is obvious leakage present? | Unique IDs; exact schema; no numeric target copies; ID and target excluded | Basic checks pass, but temporal validity rests on the synthetic data contract |
+| Apakah target imbalanced? | 858/4.000 convert, atau 21.45% | Accuracy saja tidak cukup; gunakan AP dan ranking metrics |
+| Feature mana perlu imputasi? | Timeline missing 191; latency 649; financing 206; target dan ID lengkap | Imputation harus fit pada train |
+| Apakah timeline membawa signal? | Quartile terpendek: 34.94% convert; terpanjang: 11.18% | Ada signal sekaligus overlap; bukan aturan deterministik |
+| Apakah aktivitas bermakna? | Test drive completed: 37.40%; none: 17.01%. Appointment attended: 31.22%; none: 17.79% | Pertahankan aktivitas sebelum snapshot; jangan tafsirkan secara causal |
+| Apakah source cukup untuk ranking? | Rate per source hanya 20.66%–22.52% | Weak predictor; efek referral simulator tidak menjamin observed advantage |
+| Ada leakage yang terlihat? | ID unik, schema sesuai, tidak ada target copy, ID/target bukan input | Checks dasar lolos; kebenaran waktu tetap asumsi kontrak synthetic |
 
-Numeric distributions and category counts are recorded without decorative plots.
-Numeric outcome groups use quartile bins (ties may reduce the number of bins);
-missing rows are counted separately in the missingness section. These results
-support a moderately difficult demonstration dataset, not market conclusions.
+Distribusi numeric dan kategori disimpan sebagai angka tanpa plot dekoratif.
+Grouping numeric memakai quartile; ties bisa mengurangi jumlah bin. Missing rows
+dihitung terpisah. Ini validasi simulator, bukan kesimpulan pasar.
 
-Test-set ranking achieves lift 2.7442 at K=100, yet 156 of 215 converters remain
-outside the selected queue. This cost of limited capacity must remain visible in
-future product explanations. Calibration, uncertainty estimates, operational
-eligibility, and causal benefit have not been established.
+Run v0.1 mencatat lift 2.7442 pada K=100. Ada 156 dari 215 converters di luar queue.
+Trade-off kapasitas harus terlihat, tetapi tidak membuktikan manfaat intervensi.
+v0.2 kemudian mengevaluasi calibration; v0.3 menambahkan policy, tanpa mengubah
+angka historis atau mengoptimalkan aturan berdasarkan label test.

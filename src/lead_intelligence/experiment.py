@@ -1,4 +1,4 @@
-"""Run the fixed v0.1 protocol; never tune against the held-out test set."""
+"""Jalankan protokol v0.1 yang tetap; jangan tuning berdasarkan test set."""
 
 import argparse
 import hashlib
@@ -21,7 +21,7 @@ from lead_intelligence.validation import exploratory_report, validate_schema
 def run_experiment(n_rows: int, seed: int, capacity_fraction: float,
                    output: Path, artifacts: Path) -> dict:
     if n_rows < 100 or not 0 < capacity_fraction <= 1:
-        raise ValueError("Use at least 100 rows and a capacity fraction in (0, 1]")
+        raise ValueError("Gunakan minimal 100 row dan capacity fraction dalam (0, 1]")
     data = generate_leads(n_rows, seed)
     validate_schema(data)
     train, test = train_test_split(data, test_size=.2, random_state=seed, stratify=data[TARGET])
@@ -73,7 +73,7 @@ def main() -> None:
         parser.error(str(error))
     print(json.dumps({key: value for key, value in report.items()
                       if key != "top_10_test_leads"}, indent=2))
-    print("\nTop 10 test leads (actual outcome is for offline evaluation only):")
+    print("\nTop 10 lead test (actual outcome hanya untuk evaluasi offline):")
     print(pd.DataFrame(report["top_10_test_leads"]).to_string(
         index=False, float_format=lambda value: f"{value:.4f}"))
 

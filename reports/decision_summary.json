@@ -1,0 +1,185 @@
+{
+  "version": "0.3",
+  "selected_model": "logistic_regression",
+  "comparison_report_sha256": "24e3f0d339ace29d2fdc7962e99ffb99f692ae7b7b9274b6f34db9a6cd4a7819",
+  "model_artifact_sha256": "16fb865df548b38f2100ba54c81c5e9a1236948f9e62df762ca36717d989e7dc",
+  "policy": {
+    "high_percentile": 90.0,
+    "medium_percentile": 60.0,
+    "near_purchase_days": 14,
+    "meaningful_interactions": 3,
+    "followup_limit": 5,
+    "slow_response_hours": 48,
+    "urgent_max_fraction": 0.1
+  },
+  "cohort": "v0.2 test membership; outcome tidak dipakai",
+  "rows": 1000,
+  "priority_distribution": {
+    "URGENT": {
+      "count": 9,
+      "percent": 0.9
+    },
+    "HIGH": {
+      "count": 140,
+      "percent": 14.0
+    },
+    "MEDIUM": {
+      "count": 375,
+      "percent": 37.5
+    },
+    "LOW": {
+      "count": 476,
+      "percent": 47.6
+    }
+  },
+  "action_distribution": {
+    "CONTACT_NOW": {
+      "count": 9,
+      "percent": 0.9
+    },
+    "CONFIRM_APPOINTMENT": {
+      "count": 76,
+      "percent": 7.6
+    },
+    "FOLLOW_UP_TEST_DRIVE": {
+      "count": 113,
+      "percent": 11.3
+    },
+    "RETRY_CONTACT": {
+      "count": 400,
+      "percent": 40.0
+    },
+    "NURTURE": {
+      "count": 167,
+      "percent": 16.7
+    },
+    "STANDARD_FOLLOW_UP": {
+      "count": 235,
+      "percent": 23.5
+    },
+    "REVIEW_LEAD_DATA": {
+      "count": 0,
+      "percent": 0.0
+    }
+  },
+  "sanity_checks": {
+    "valid_outputs": true,
+    "urgent_is_minority": true,
+    "high_score_action_count": 5
+  },
+  "warnings": [],
+  "examples": [
+    {
+      "lead_id": 4320,
+      "model_score": 0.8292294809855307,
+      "score_percentile": 99.9,
+      "priority": "URGENT",
+      "recommended_action": "CONTACT_NOW",
+      "reason_codes": [
+        "HIGH_MODEL_SCORE",
+        "SHORT_PURCHASE_TIMELINE",
+        "CONTACTABLE"
+      ]
+    },
+    {
+      "lead_id": 2012,
+      "model_score": 0.7792687013973045,
+      "score_percentile": 99.8,
+      "priority": "HIGH",
+      "recommended_action": "FOLLOW_UP_TEST_DRIVE",
+      "reason_codes": [
+        "HIGH_MODEL_SCORE",
+        "TEST_DRIVE_COMPLETED"
+      ]
+    },
+    {
+      "lead_id": 958,
+      "model_score": 0.7449643541801169,
+      "score_percentile": 99.7,
+      "priority": "HIGH",
+      "recommended_action": "FOLLOW_UP_TEST_DRIVE",
+      "reason_codes": [
+        "HIGH_MODEL_SCORE",
+        "TEST_DRIVE_COMPLETED"
+      ]
+    },
+    {
+      "lead_id": 119,
+      "model_score": 0.7209041444339873,
+      "score_percentile": 99.6,
+      "priority": "MEDIUM",
+      "recommended_action": "RETRY_CONTACT",
+      "reason_codes": [
+        "HIGH_MODEL_SCORE",
+        "INTERMITTENT_CONTACT"
+      ]
+    },
+    {
+      "lead_id": 4525,
+      "model_score": 0.7205368224796025,
+      "score_percentile": 99.5,
+      "priority": "HIGH",
+      "recommended_action": "FOLLOW_UP_TEST_DRIVE",
+      "reason_codes": [
+        "HIGH_MODEL_SCORE",
+        "TEST_DRIVE_COMPLETED"
+      ]
+    },
+    {
+      "lead_id": 2214,
+      "model_score": 0.6550772050690827,
+      "score_percentile": 99.4,
+      "priority": "HIGH",
+      "recommended_action": "FOLLOW_UP_TEST_DRIVE",
+      "reason_codes": [
+        "HIGH_MODEL_SCORE",
+        "TEST_DRIVE_COMPLETED"
+      ]
+    },
+    {
+      "lead_id": 705,
+      "model_score": 0.6539813449865909,
+      "score_percentile": 99.3,
+      "priority": "HIGH",
+      "recommended_action": "FOLLOW_UP_TEST_DRIVE",
+      "reason_codes": [
+        "HIGH_MODEL_SCORE",
+        "TEST_DRIVE_COMPLETED"
+      ]
+    },
+    {
+      "lead_id": 3202,
+      "model_score": 0.650638639031551,
+      "score_percentile": 99.2,
+      "priority": "URGENT",
+      "recommended_action": "CONTACT_NOW",
+      "reason_codes": [
+        "HIGH_MODEL_SCORE",
+        "SHORT_PURCHASE_TIMELINE",
+        "CONTACTABLE"
+      ]
+    },
+    {
+      "lead_id": 442,
+      "model_score": 0.6472064523211698,
+      "score_percentile": 99.1,
+      "priority": "HIGH",
+      "recommended_action": "FOLLOW_UP_TEST_DRIVE",
+      "reason_codes": [
+        "HIGH_MODEL_SCORE",
+        "TEST_DRIVE_COMPLETED"
+      ]
+    },
+    {
+      "lead_id": 1167,
+      "model_score": 0.6389560720375453,
+      "score_percentile": 99.0,
+      "priority": "HIGH",
+      "recommended_action": "FOLLOW_UP_TEST_DRIVE",
+      "reason_codes": [
+        "HIGH_MODEL_SCORE",
+        "TEST_DRIVE_COMPLETED"
+      ]
+    }
+  ]
+}
